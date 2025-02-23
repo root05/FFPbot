@@ -134,7 +134,7 @@ def webhook():
 
             if 'text' in message and message['text'] == '/start':
                 image_url = "https://sun9-28.userapi.com/s/v1/ig2/uPvIzj3U5U2z-7jS8SwawDLX1hkvF7SgzN3VcMy-0_TvQnvUYoywgVRWk1rCgNTGGTxXNxMIDxFXGVGkb14CgxgJ.jpg?quality=95&as=32x32,48x48,72x72,108x108,160x160,240x240,360x360,480x480,540x540,640x640,720x720,1080x1080,1280x1280,1301x1301&from=bu&u=eG0S4Pm-U5esBh_oRE8MwlhlXhV2kDKgO9a8FWI_xqU&cs=1301x1301"
-                caption = "Привет! Это Friendly Fire Promo!\nПодпишись на наш канал, чтобы получить свою скидку и быть в курсе новых вечеринок."
+                caption = "Привет! \nЭто Friendly Fire Promo!\nПодпишись на наш канал, чтобы получить свою скидку и быть в курсе новых вечеринок."
                 send_photo(chat_id, image_url, caption, reply_markup=get_subscription_keyboard())
 
         elif 'callback_query' in update:
