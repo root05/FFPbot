@@ -110,7 +110,7 @@ def get_subscription_keyboard():
 def get_ticket_keyboard():
     keyboard = {
         "inline_keyboard": [
-            [{"text": "Купить билет", "url": "https://hardline-dnb.ru/nhEventsForm"}]
+            [{"text": "Купить билет", "url": "https://hardline-dnb.ru"}]
         ]
     }
     return keyboard
