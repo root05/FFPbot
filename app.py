@@ -5,10 +5,16 @@ import json
 
 app = Flask(__name__)
 
-# Получаем значения из переменных окружения
+# Получаем и проверяем значения из переменных окружения
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL_ID = os.getenv("CHANNEL_ID")
+RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
 PORT = int(os.getenv("PORT", 8080))  # По умолчанию 8080, если PORT не задан
+
+print(f"BOT_TOKEN: {BOT_TOKEN}")
+print(f"CHANNEL_ID: {CHANNEL_ID}")
+print(f"RENDER_EXTERNAL_HOSTNAME: {RENDER_EXTERNAL_HOSTNAME}")
+print(f"PORT: {PORT}")
 
 if not BOT_TOKEN or not CHANNEL_ID:
     raise ValueError("BOT_TOKEN или CHANNEL_ID не установлены в переменных окружения")
