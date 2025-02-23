@@ -129,7 +129,7 @@ def webhook():
 
             if callback_query['data'] == "check_subscription":
                 if check_subscription(user_id):
-                    edit_message_caption(chat_id, message_id, "Поздравляем! \nВы подписаны на наши обновления, мы хотим отблагодарить вас промокодом на наши мероприятия! \nПромокод: **JUNGLEISMASSIVE** действует только при покупке билетов онлайн.", reply_markup=get_ticket_keyboard())
+                    edit_message_caption(chat_id, message_id, "Поздравляем! \nВы подписаны на наши обновления, мы хотим отблагодарить вас промокодом на наши мероприятия! \n Промокод: JUNGLEISMASSIVE действует только при покупке билетов онлайн.", reply_markup=get_ticket_keyboard())
                 else:
                     edit_message_caption(chat_id, message_id, "К сожалению, вы всё ещё не подписаны на наш канал.", reply_markup=get_subscription_keyboard())
 
