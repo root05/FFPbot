@@ -9,7 +9,8 @@ app = Flask(__name__)
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL_ID = os.getenv("CHANNEL_ID")
 RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
-PORT = int(os.getenv("PORT", 8080))  # По умолчанию 8080, если PORT не задан
+# Исправляем определение PORT, добавляя проверку на некорректные данные
+PORT = int(os.getenv("PORT", "8080"))  # По умолчанию 8080, если PORT не задан или некорректен
 
 print(f"BOT_TOKEN: {BOT_TOKEN}")
 print(f"CHANNEL_ID: {CHANNEL_ID}")
@@ -149,7 +150,6 @@ def webhook():
 
             if callback_query['data'] == "check_subscription":
                 if check_subscription(user_id):
-                    # Убраны звездочки вокруг промокода
                     edit_message_caption(chat_id, message_id, "Поздравляем! Вы подписаны на наши обновления,\nмы хотим отблагодарить вас промокодом на наши мероприятия!\nПромокод: JUNGLEISMASSIVE действует только при покупке билетов онлайн.", reply_markup=get_ticket_keyboard())
                 else:
                     edit_message_caption(chat_id, message_id, "К сожалению, вы всё ещё не подписаны на наш канал.", reply_markup=get_subscription_keyboard())
