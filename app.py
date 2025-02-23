@@ -104,7 +104,7 @@ def get_ticket_keyboard():
     }
     return keyboard
 
-# Обработка вебхука (GET для UptimeRobot и POST для Telegram)
+# Обработка вебхука (GET для UptimeRobot и проверки, POST для Telegram)
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
     if request.method == 'GET':
@@ -115,6 +115,7 @@ def webhook():
             <body>
                 <h1>Friendly Fire Promo Bot is running!</h1>
                 <p>Webhook is active and ready to receive updates from Telegram.</p>
+                <p>Status: OK</p>
             </body>
         </html>
         """
@@ -142,7 +143,8 @@ def webhook():
 
             if callback_query['data'] == "check_subscription":
                 if check_subscription(user_id):
-                    edit_message_caption(chat_id, message_id, "Поздравляем! Вы подписаны на наши обновления,\nмы хотим отблагодарить вас промокодом на наши мероприятия!\n Промокод: JUNGLEISMASSIVE действует только при покупке билетов онлайн.", reply_markup=get_ticket_keyboard())
+                    # Убраны звездочки вокруг промокода
+                    edit_message_caption(chat_id, message_id, "Поздравляем! Вы подписаны на наши обновления,\nмы хотим отблагодарить вас промокодом на наши мероприятия!\nПромокод: JUNGLEISMASSIVE действует только при покупке билетов онлайн.", reply_markup=get_ticket_keyboard())
                 else:
                     edit_message_caption(chat_id, message_id, "К сожалению, вы всё ещё не подписаны на наш канал.", reply_markup=get_subscription_keyboard())
 
