@@ -7,6 +7,9 @@ import os
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL_ID = os.getenv("CHANNEL_ID")
 
+if not BOT_TOKEN or not CHANNEL_ID:
+    raise ValueError("BOT_TOKEN или CHANNEL_ID не установлены в переменных окружения")
+
 # Инициализация бота и Flask
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
@@ -34,7 +37,10 @@ def handle_start(message):
     user_id = message.from_user.id
     image_url = "https://sun9-28.userapi.com/s/v1/ig2/uPvIzj3U5U2z-7jS8SwawDLX1hkvF7SgzN3VcMy-0_TvQnvUYoywgVRWk1rCgNTGGTxXNxMIDxFXGVGkb14CgxgJ.jpg?quality=95&as=32x32,48x48,72x72,108x108,160x160,240x240,360x360,480x480,540x540,640x640,720x720,1080x1080,1280x1280,1301x1301&from=bu&u=eG0S4Pm-U5esBh_oRE8MwlhlXhV2kDKgO9a8FWI_xqU&cs=1301x1301"
     caption = "Привет! Это Friendly Fire Promo! Подпишись на наш канал, чтобы быть в курсе новых вечеринок и получить свою скидку."
-    bot.send_photo(user_id, image_url, caption=caption, reply_markup=get_subscription_keyboard())
+    try:
+        bot.send_photo(user_id, image_url, caption=caption, reply_markup=get_subscription_keyboard())
+    except Exception as e:
+        print(f"Ошибка отправки фото: {e}")
 
 # Обработка нажатия кнопки "Уже подписан"
 @bot.callback_query_handler(func=lambda call: call.data == "check_subscription")
@@ -62,18 +68,30 @@ def handle_check_subscription(call):
         bot.answer_callback_query(call.id, "Произошла ошибка, попробуйте позже.")
         print(f"Ошибка: {e}")
 
+# Маршрут для корневого URL
+@app.route('/', methods=['GET'])
+def home():
+    return "Friendly Fire Promo Bot is running!", 200
+
 # Маршрут для вебхука
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    update = telebot.types.Update.de_json(request.stream.read().decode('utf-8'))
-    bot.process_new_updates([update])
-    return 'OK', 200
+    try:
+        update = telebot.types.Update.de_json(request.stream.read().decode('utf-8'))
+        bot.process_new_updates([update])
+        return 'OK', 200
+    except Exception as e:
+        print(f"Ошибка в вебхуке: {e}")
+        return 'Error', 500
 
 # Запуск приложения
 if __name__ == "__main__":
     bot.remove_webhook()
-    # Используем переменную окружения Render для динамического URL
     render_hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME")
     if render_hostname:
-        bot.set_webhook(url=f"https://{render_hostname}/webhook")
+        try:
+            bot.set_webhook(url=f"https://{render_hostname}/webhook")
+            print(f"Вебхук установлен: https://{render_hostname}/webhook")
+        except Exception as e:
+            print(f"Ошибка установки вебхука: {e}")
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
