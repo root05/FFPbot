@@ -44,6 +44,7 @@ def handle_start(message):
         print(f"Фото отправлено пользователю {user_id}")
     except Exception as e:
         print(f"Ошибка отправки фото: {e}")
+        bot.send_message(user_id, "Произошла ошибка, попробуйте позже.")
 
 # Обработка нажатия кнопки "Уже подписан"
 @bot.callback_query_handler(func=lambda call: call.data == "check_subscription")
@@ -84,7 +85,7 @@ def home():
 def webhook():
     try:
         update = telebot.types.Update.de_json(request.stream.read().decode('utf-8'))
-        print(f"Получен вебхук: {update}")
+        print(f"Получен вебхук: {update.to_json()}")  # Более детальный вывод
         bot.process_new_updates([update])
         return 'OK', 200
     except Exception as e:
