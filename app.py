@@ -48,7 +48,7 @@ def handle_check_subscription(call):
             bot.edit_message_caption(
                 chat_id=user_id,
                 message_id=call.message.message_id,
-                caption="Поздравляем! Вы подписаны на наши обновления, мы хотим отблагодарить вас промокодом на наши мероприятия! Промокод: **JUNGLEISMASSIVE** действует только при покупке билетов онлайн.",
+                caption="Поздравляем! Вы подписаны на наши обновления, мы хотим отблагодарить вас промокодом на наши мероприятия! Промокод: JUNGLEISMASSIVE действует только при покупке билетов онлайн.",
                 reply_markup=keyboard
             )
         else:
