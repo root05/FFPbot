@@ -72,8 +72,8 @@ def webhook():
 # Запуск приложения
 if __name__ == "__main__":
     bot.remove_webhook()
-    # Устанавливаем вебхук с использованием внешнего URL Fly.io
-    fly_app_name = os.getenv("FLY_APP_NAME")
-    if fly_app_name:
-        bot.set_webhook(url=f"https://{fly_app_name}.fly.dev/webhook")
+    # Используем переменную окружения Render для динамического URL
+    render_hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME")
+    if render_hostname:
+        bot.set_webhook(url=f"https://{render_hostname}/webhook")
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
