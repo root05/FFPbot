@@ -10,7 +10,11 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL_ID = os.getenv("CHANNEL_ID")
 RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
 # Исправляем определение PORT, добавляя проверку на некорректные данные
-PORT = int(os.getenv("PORT", "8080"))  # По умолчанию 8080, если PORT не задан или некорректен
+port_value = os.getenv("PORT")
+if port_value == "os.getenv(\"PORT\")" or not port_value:
+    PORT = 8080  # Используем 8080 как резервное значение, если PORT некорректен
+else:
+    PORT = int(port_value)  # Преобразуем в число, если значение корректно
 
 print(f"BOT_TOKEN: {BOT_TOKEN}")
 print(f"CHANNEL_ID: {CHANNEL_ID}")
