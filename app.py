@@ -6,6 +6,7 @@ import os
 # Получаем значения из переменных окружения
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL_ID = os.getenv("CHANNEL_ID")
+PORT = int(os.getenv("PORT", 8080))  # По умолчанию 8080, если PORT не задан
 
 if not BOT_TOKEN or not CHANNEL_ID:
     raise ValueError("BOT_TOKEN или CHANNEL_ID не установлены в переменных окружения")
@@ -18,6 +19,7 @@ app = Flask(__name__)
 def check_subscription(user_id):
     try:
         member = bot.get_chat_member(CHANNEL_ID, user_id)
+        print(f"Проверка подписки для user_id {user_id}: {member.status}")
         return member.status in ["member", "administrator", "creator"]
     except Exception as e:
         print(f"Ошибка проверки подписки: {e}")
@@ -39,6 +41,7 @@ def handle_start(message):
     caption = "Привет! Это Friendly Fire Promo! Подпишись на наш канал, чтобы быть в курсе новых вечеринок и получить свою скидку."
     try:
         bot.send_photo(user_id, image_url, caption=caption, reply_markup=get_subscription_keyboard())
+        print(f"Фото отправлено пользователю {user_id}")
     except Exception as e:
         print(f"Ошибка отправки фото: {e}")
 
@@ -54,9 +57,10 @@ def handle_check_subscription(call):
             bot.edit_message_caption(
                 chat_id=user_id,
                 message_id=call.message.message_id,
-                caption="Поздравляем! Вы подписаны на наши обновления, мы хотим отблагодарить вас промокодом на наши мероприятия! Промокод: JUNGLEISMASSIVE действует только при покупке билетов онлайн.",
+                caption="Поздравляем! Вы подписаны на наши обновления, мы хотим отблагодарить вас промокодом на наши мероприятия! Промокод: **JUNGLEISMASSIVE** действует только при покупке билетов онлайн.",
                 reply_markup=keyboard
             )
+            print(f"Пользователь {user_id} подписан, сообщение обновлено")
         else:
             bot.edit_message_caption(
                 chat_id=user_id,
@@ -64,13 +68,15 @@ def handle_check_subscription(call):
                 caption="К сожалению, вы всё ещё не подписаны на наш канал.",
                 reply_markup=get_subscription_keyboard()
             )
+            print(f"Пользователь {user_id} не подписан")
     except Exception as e:
         bot.answer_callback_query(call.id, "Произошла ошибка, попробуйте позже.")
-        print(f"Ошибка: {e}")
+        print(f"Ошибка в callback: {e}")
 
 # Маршрут для корневого URL
 @app.route('/', methods=['GET'])
 def home():
+    print("Получен GET-запрос к /")
     return "Friendly Fire Promo Bot is running!", 200
 
 # Маршрут для вебхука
@@ -78,6 +84,7 @@ def home():
 def webhook():
     try:
         update = telebot.types.Update.de_json(request.stream.read().decode('utf-8'))
+        print(f"Получен вебхук: {update}")
         bot.process_new_updates([update])
         return 'OK', 200
     except Exception as e:
@@ -92,3 +99,5 @@ if render_hostname:
         print(f"Вебхук установлен: https://{render_hostname}/webhook")
     except Exception as e:
         print(f"Ошибка установки вебхука: {e}")
+
+# Запуск через Gunicorn не требуется в коде, управляется Render
