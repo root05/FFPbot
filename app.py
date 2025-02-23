@@ -119,7 +119,8 @@ def get_ticket_keyboard():
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
     if request.method == 'GET':
-        # Простая HTML-страница для UptimeRobot и проверки
+        # Простая HTML-страница для UptimeRobot и проверки с отладочным сообщением
+        print(f"Получен GET-запрос к /webhook от {request.remote_addr}")
         html = """
         <html>
             <head><title>Friendly Fire Promo Bot</title></head>
