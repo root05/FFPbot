@@ -119,19 +119,9 @@ def get_ticket_keyboard():
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
     if request.method == 'GET':
-        # Простая HTML-страница для UptimeRobot и проверки с отладочным сообщением
+        # Упрощенный текстовый ответ для внешних запросов, чтобы избежать проблем с HTML
         print(f"Получен GET-запрос к /webhook от {request.remote_addr}")
-        html = """
-        <html>
-            <head><title>Friendly Fire Promo Bot</title></head>
-            <body>
-                <h1>Friendly Fire Promo Bot is running!</h1>
-                <p>Webhook is active and ready to receive updates from Telegram.</p>
-                <p>Status: OK</p>
-            </body>
-        </html>
-        """
-        return html, 200
+        return "Webhook is active and ready. Status: OK", 200
 
     try:
         update = request.get_json()
@@ -155,7 +145,7 @@ def webhook():
 
             if callback_query['data'] == "check_subscription":
                 if check_subscription(user_id):
-                    edit_message_caption(chat_id, message_id, "Поздравляем! \n Вы подписаны на наши обновления, мы хотим отблагодарить вас промокодом на наши мероприятия! \n Промокод: JUNGLEISMASSIVE действует только при покупке билетов онлайн.", reply_markup=get_ticket_keyboard())
+                    edit_message_caption(chat_id, message_id, "Поздравляем! \n Вы подписаны на наши обновления,мы хотим отблагодарить вас промокодом на наши мероприятия!\n Промокод: JUNGLEISMASSIVE действует только при покупке билетов онлайн.", reply_markup=get_ticket_keyboard())
                 else:
                     edit_message_caption(chat_id, message_id, "К сожалению, вы всё ещё не подписаны на наш канал.", reply_markup=get_subscription_keyboard())
 
