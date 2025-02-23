@@ -54,7 +54,7 @@ def handle_check_subscription(call):
             bot.edit_message_caption(
                 chat_id=user_id,
                 message_id=call.message.message_id,
-                caption="Поздравляем! <br>Вы подписаны на наши обновления, мы хотим отблагодарить вас промокодом на наши мероприятия! <br>Промокод: JUNGLEISMASSIVE действует только при покупке билетов онлайн.",
+                caption="Поздравляем! <br>Вы подписаны на наши обновления, мы хотим отблагодарить вас промокодом на наши мероприятия! Промокод: JUNGLEISMASSIVE действует только при покупке билетов онлайн.",
                 reply_markup=keyboard
             )
         else:
@@ -84,12 +84,11 @@ def webhook():
         print(f"Ошибка в вебхуке: {e}")
         return 'Error', 500
 
-# Запуск приложения (без app.run, Gunicorn запустит сам)
-if __name__ == "__main__":
-    render_hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME")
-    if render_hostname:
-        try:
-            bot.set_webhook(url=f"https://{render_hostname}/webhook")
-            print(f"Вебхук установлен: https://{render_hostname}/webhook")
-        except Exception as e:
-            print(f"Ошибка установки вебхука: {e}")
+# Установка вебхука перед запуском
+render_hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME")
+if render_hostname:
+    try:
+        bot.set_webhook(url=f"https://{render_hostname}/webhook")
+        print(f"Вебхук установлен: https://{render_hostname}/webhook")
+    except Exception as e:
+        print(f"Ошибка установки вебхука: {e}")
