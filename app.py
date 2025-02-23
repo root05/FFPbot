@@ -1,6 +1,6 @@
 import os
 import requests
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template_string
 import json
 
 app = Flask(__name__)
@@ -104,9 +104,22 @@ def get_ticket_keyboard():
     }
     return keyboard
 
-# Обработка вебхука
-@app.route('/webhook', methods=['POST'])
+# Обработка вебхука (GET для UptimeRobot и POST для Telegram)
+@app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
+    if request.method == 'GET':
+        # Простая HTML-страница для UptimeRobot и проверки
+        html = """
+        <html>
+            <head><title>Friendly Fire Promo Bot</title></head>
+            <body>
+                <h1>Friendly Fire Promo Bot is running!</h1>
+                <p>Webhook is active and ready to receive updates from Telegram.</p>
+            </body>
+        </html>
+        """
+        return html, 200
+
     try:
         update = request.get_json()
         print(f"Получен вебхук: {json.dumps(update, indent=2)}")
@@ -118,7 +131,7 @@ def webhook():
 
             if 'text' in message and message['text'] == '/start':
                 image_url = "https://sun9-28.userapi.com/s/v1/ig2/uPvIzj3U5U2z-7jS8SwawDLX1hkvF7SgzN3VcMy-0_TvQnvUYoywgVRWk1rCgNTGGTxXNxMIDxFXGVGkb14CgxgJ.jpg?quality=95&as=32x32,48x48,72x72,108x108,160x160,240x240,360x360,480x480,540x540,640x640,720x720,1080x1080,1280x1280,1301x1301&from=bu&u=eG0S4Pm-U5esBh_oRE8MwlhlXhV2kDKgO9a8FWI_xqU&cs=1301x1301"
-                caption = "Привет! Это Friendly Fire Promo! \n Подпишись на наш канал, чтобы быть в курсе новых вечеринок и получить свою скидку."
+                caption = "Привет! Это Friendly Fire Promo!\nПодпишись на наш канал, чтобы быть в курсе новых вечеринок и получить свою скидку."
                 send_photo(chat_id, image_url, caption, reply_markup=get_subscription_keyboard())
 
         elif 'callback_query' in update:
@@ -129,7 +142,7 @@ def webhook():
 
             if callback_query['data'] == "check_subscription":
                 if check_subscription(user_id):
-                    edit_message_caption(chat_id, message_id, "Поздравляем! \nВы подписаны на наши обновления, мы хотим отблагодарить вас промокодом на наши мероприятия! \n Промокод: JUNGLEISMASSIVE действует только при покупке билетов онлайн.", reply_markup=get_ticket_keyboard())
+                    edit_message_caption(chat_id, message_id, "Поздравляем! Вы подписаны на наши обновления,\nмы хотим отблагодарить вас промокодом на наши мероприятия!\n Промокод: JUNGLEISMASSIVE действует только при покупке билетов онлайн.", reply_markup=get_ticket_keyboard())
                 else:
                     edit_message_caption(chat_id, message_id, "К сожалению, вы всё ещё не подписаны на наш канал.", reply_markup=get_subscription_keyboard())
 
