@@ -145,9 +145,9 @@ def webhook():
 
             if callback_query['data'] == "check_subscription":
                 if check_subscription(user_id):
-                    edit_message_caption(chat_id, message_id, "Поздравляем! \nВы подписаны на наши обновления,мы хотим отблагодарить вас промокодом на наши мероприятия!\nПромокод: JUNGLEISMASSIVE действует только при покупке билетов онлайн.", reply_markup=get_ticket_keyboard())
+                    edit_message_caption(chat_id, message_id, "Поздравляем! \nТы подписаны на наши обновления, мы хотим отблагодарить теья промокодом на наши мероприятия!\nПромокод: JUNGLEISMASSIVE действует только при покупке билетов онлайн.", reply_markup=get_ticket_keyboard())
                 else:
-                    edit_message_caption(chat_id, message_id, "К сожалению, вы всё ещё не подписаны на наш канал.", reply_markup=get_subscription_keyboard())
+                    edit_message_caption(chat_id, message_id, "К сожалению, ты всё ещё не подписан на наш канал.", reply_markup=get_subscription_keyboard())
 
         return jsonify({"status": "OK"}), 200
     except Exception as e:
