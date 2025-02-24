@@ -15,7 +15,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Жёстко задаём константы внутри кода
-BOT_TOKEN = "7874282672:AAHomA_qWkMnY5VJAZAEwlkVM0uIvVDb8jM"
+BOT_TOKEN = "7139867890:AAFaF7Gr3-khHEaN1IbeZROGt_PTSqIS-f4"
 CHANNEL_ID = "-1001823318732"  # Числовой ID канала
 PROMO_CODE = "JUNGLEISMASSIVE"
 
