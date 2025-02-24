@@ -1,20 +1,21 @@
 import os
 import requests
-from flask import Flask, request, jsonify, render_template_string
-import json
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# Получаем и проверяем значения из переменных окружения
+# Объявляем константы в начале кода
+PROMO_CODE = "JUNGLEISMASSIVE"
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL_ID = os.getenv("CHANNEL_ID")
 RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
-# Исправляем определение PORT, добавляя проверку на некорректные данные
+
+# Проверка и установка порта
 port_value = os.getenv("PORT")
 if port_value == "os.getenv(\"PORT\")" or not port_value:
-    PORT = 8080  # Используем 8080 как резервное значение, если PORT некорректен
+    PORT = 8080
 else:
-    PORT = int(port_value)  # Преобразуем в число, если значение корректно
+    PORT = int(port_value)
 
 print(f"BOT_TOKEN: {BOT_TOKEN}")
 print(f"CHANNEL_ID: {CHANNEL_ID}")
@@ -94,7 +95,7 @@ def check_subscription(user_id):
         print(f"Ошибка проверки подписки: {e}")
         return False
 
-# Создание клавиатуры с кнопками
+# Клавиатура для подписки
 def get_subscription_keyboard():
     keyboard = {
         "inline_keyboard": [
@@ -106,22 +107,22 @@ def get_subscription_keyboard():
     }
     return keyboard
 
-# Создание клавиатуры с кнопкой "Купить билет"
+# Клавиатура с промокодом и покупкой билета
 def get_ticket_keyboard():
     keyboard = {
         "inline_keyboard": [
+            [{"text": "Скопировать промокод", "switch_inline_query": PROMO_CODE}],
             [{"text": "Купить билет", "url": "https://hardline-dnb.ru"}]
         ]
     }
     return keyboard
 
-# Обработка вебхука (GET для UptimeRobot и проверки, POST для Telegram)
+# Обработка вебхука
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
     if request.method == 'GET':
-        # Упрощенный текстовый ответ для внешних запросов, чтобы избежать проблем с HTML
         print(f"Получен GET-запрос к /webhook от {request.remote_addr}")
-        return "Webhook is active and ready. Status: OK", 200
+        return "Webhook is active and ready. Status: OK", 200, {'Content-Type': 'text/plain'}
 
     try:
         update = request.get_json()
@@ -145,22 +146,26 @@ def webhook():
 
             if callback_query['data'] == "check_subscription":
                 if check_subscription(user_id):
-                    edit_message_caption(chat_id, message_id, "Поздравляем! \nТы подписан на наши обновления и мы хотим отблагодарить тебя промокодом на наши мероприятия: JUNGLEISMASSIVE действует только при покупке билетов онлайн.", reply_markup=get_ticket_keyboard())
+                    edit_message_caption(chat_id, message_id, 
+                        f"Поздравляем! \nТы подписан на наши обновления и мы хотим отблагодарить тебя промокодом на наши мероприятия: {PROMO_CODE} действует только при покупке билетов онлайн.",
+                        reply_markup=get_ticket_keyboard())
                 else:
-                    edit_message_caption(chat_id, message_id, "К сожалению, ты всё ещё не подписан на наш канал.", reply_markup=get_subscription_keyboard())
+                    edit_message_caption(chat_id, message_id, 
+                        "К сожалению, ты всё ещё не подписан на наш канал.", 
+                        reply_markup=get_subscription_keyboard())
 
         return jsonify({"status": "OK"}), 200
     except Exception as e:
         print(f"Ошибка в вебхуке: {e}")
         return jsonify({"status": "Error", "message": str(e)}), 500
 
-# Маршрут для корневого URL
+# Корневой маршрут для UptimeRobot
 @app.route('/', methods=['GET'])
 def home():
-    print("Получен GET-запрос к /")
-    return "Friendly Fire Promo Bot is running!", 200
+    print(f"Получен GET-запрос к / от {request.remote_addr}")
+    return "Friendly Fire Promo Bot is running!", 200, {'Content-Type': 'text/plain'}
 
-# Установка вебхука перед запуском (для Render)
+# Установка вебхука
 render_hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME")
 if render_hostname:
     try:
