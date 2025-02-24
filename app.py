@@ -1,15 +1,11 @@
 import requests
 import json
-from flask import Flask, request, jsonify
 import time
-
-app = Flask(__name__)
 
 # Жёстко задаём константы внутри кода
 BOT_TOKEN = "7874282672:AAHomA_qWkMnY5VJAZAEwlkVM0uIvVDb8jM"
-CHANNEL_ID = "-1001823318732"  # Числовой ID канала, начинающийся с -100
+CHANNEL_ID = "-1001823318732"  # Числовой ID канала
 PROMO_CODE = "JUNGLEISMASSIVE"
-PORT = 8080  # Локальный порт для тестов, если нужно
 
 # Базовый URL Telegram API
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/"
@@ -162,4 +158,4 @@ def main():
             time.sleep(5)  # Задержка перед повторной попыткой
 
 if __name__ == "__main__":
-    main()  # Запускаем long polling вместо Flask
+    main()
