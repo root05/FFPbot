@@ -2,8 +2,6 @@ import requests
 import json
 import time
 import logging
-from dotenv import load_dotenv
-import os
 
 # Настраиваем базовое логирование
 logging.basicConfig(
@@ -16,16 +14,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Загружаем переменные из .env
-load_dotenv()
-
-# Получаем константы из переменных окружения
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-CHANNEL_ID = os.getenv("-1001823318732")  # Числовой ID канала
-PROMO_CODE = os.getenv("PROMO_CODE", "JUNGLEISMASSIVE")  # Значение по умолчанию
-
-if not BOT_TOKEN or not CHANNEL_ID:
-    raise ValueError("BOT_TOKEN или CHANNEL_ID не установлены в переменных окружения")
+# Жёстко задаём константы внутри кода
+BOT_TOKEN = "7874282672:AAHomA_qWkMnY5VJAZAEwlkVM0uIvVDb8jM"
+CHANNEL_ID = "-1001823318732"  # Числовой ID канала
+PROMO_CODE = "JUNGLEISMASSIVE"
 
 # Базовый URL Telegram API
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/"
