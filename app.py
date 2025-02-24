@@ -46,7 +46,7 @@ def send_message(chat_id, text, reply_markup=None):
         print(f"Ошибка отправки сообщения: {e}")
 
 # Функция для отправки фото в Telegram
-def send_photo(chat_id, photo_url, caption, reply_markup=None):
+def send_photo(chat_id, photo_url, caption, reply_markup=None, parse_mode=None):
     url = f"{TELEGRAM_API_URL}sendPhoto"
     payload = {
         "chat_id": chat_id,
@@ -55,6 +55,8 @@ def send_photo(chat_id, photo_url, caption, reply_markup=None):
     }
     if reply_markup:
         payload["reply_markup"] = json.dumps(reply_markup)
+    if parse_mode:
+        payload["parse_mode"] = parse_mode
     try:
         response = requests.post(url, json=payload)
         response.raise_for_status()
@@ -63,7 +65,7 @@ def send_photo(chat_id, photo_url, caption, reply_markup=None):
         print(f"Ошибка отправки фото: {e}")
 
 # Функция для редактирования сообщения в Telegram
-def edit_message_caption(chat_id, message_id, caption, reply_markup=None):
+def edit_message_caption(chat_id, message_id, caption, reply_markup=None, parse_mode=None):
     url = f"{TELEGRAM_API_URL}editMessageCaption"
     payload = {
         "chat_id": chat_id,
@@ -72,6 +74,8 @@ def edit_message_caption(chat_id, message_id, caption, reply_markup=None):
     }
     if reply_markup:
         payload["reply_markup"] = json.dumps(reply_markup)
+    if parse_mode:
+        payload["parse_mode"] = parse_mode
     try:
         response = requests.post(url, json=payload)
         response.raise_for_status()
@@ -108,11 +112,10 @@ def get_subscription_keyboard():
     }
     return keyboard
 
-# Клавиатура с промокодом и покупкой билета
+# Клавиатура только с покупкой билета
 def get_ticket_keyboard():
     keyboard = {
         "inline_keyboard": [
-            [{"text": "Скопировать промокод", "callback_data": "copy_promo"}],
             [{"text": "Купить билет", "url": "https://hardline-dnb.ru"}]
         ]
     }
@@ -148,17 +151,13 @@ def webhook():
 
             if callback_data == "check_subscription":
                 if check_subscription(user_id):
-                    edit_message_caption(chat_id, message_id, 
-                        f"Поздравляем! \nТы подписан на наши обновления и мы хотим отблагодарить тебя промокодом на наши мероприятия: {PROMO_CODE} действует только при покупке билетов онлайн.",
-                        reply_markup=get_ticket_keyboard())
+                    # Используем Markdown для выделения промокода
+                    caption = f"Поздравляем! \nТы подписан на наши обновления и мы хотим отблагодарить тебя промокодом на наши мероприятия: `{PROMO_CODE}`\nДействует только при покупке билетов онлайн."
+                    edit_message_caption(chat_id, message_id, caption, reply_markup=get_ticket_keyboard(), parse_mode="Markdown")
                 else:
                     edit_message_caption(chat_id, message_id, 
                         "К сожалению, ты всё ещё не подписан на наш канал.", 
                         reply_markup=get_subscription_keyboard())
-
-            elif callback_data == "copy_promo":
-                # Отправляем промокод как отдельное сообщение
-                send_message(chat_id, f"Вот твой промокод: `{PROMO_CODE}`\nВыдели его и скопируй!", parse_mode="Markdown")
 
         return jsonify({"status": "OK"}), 200
     except Exception as e:
