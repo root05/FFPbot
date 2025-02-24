@@ -159,8 +159,9 @@ def webhook():
                         "Ты подписан на наши обновления и мы хотим отблагодарить тебя промокодом на наши мероприятия:"
                     )
                     edit_message_caption(chat_id, message_id, caption)
-                    # Отправляем второе сообщение с промокодом и кнопкой
-                    send_message(chat_id, PROMO_CODE, reply_markup=get_ticket_keyboard())
+                    # Отправляем второе сообщение с промокодом (жирный и моноширинный) и кнопкой
+                    promo_text = f"<b><code>{PROMO_CODE}</code></b>"
+                    send_message(chat_id, promo_text, reply_markup=get_ticket_keyboard(), parse_mode="HTML")
                 else:
                     edit_message_caption(chat_id, message_id, 
                         "К сожалению, ты всё ещё не подписан на наш канал.", 
