@@ -1,6 +1,6 @@
 import os
 import requests
-import json  # Добавлен импорт json
+import json
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
@@ -112,7 +112,7 @@ def get_subscription_keyboard():
 def get_ticket_keyboard():
     keyboard = {
         "inline_keyboard": [
-            [{"text": "Скопировать промокод", "switch_inline_query": PROMO_CODE}],
+            [{"text": "Скопировать промокод", "callback_data": "copy_promo"}],
             [{"text": "Купить билет", "url": "https://hardline-dnb.ru"}]
         ]
     }
@@ -144,8 +144,9 @@ def webhook():
             user_id = callback_query['from']['id']
             message_id = callback_query['message']['message_id']
             chat_id = callback_query['message']['chat']['id']
+            callback_data = callback_query['data']
 
-            if callback_query['data'] == "check_subscription":
+            if callback_data == "check_subscription":
                 if check_subscription(user_id):
                     edit_message_caption(chat_id, message_id, 
                         f"Поздравляем! \nТы подписан на наши обновления и мы хотим отблагодарить тебя промокодом на наши мероприятия: {PROMO_CODE} действует только при покупке билетов онлайн.",
@@ -155,9 +156,13 @@ def webhook():
                         "К сожалению, ты всё ещё не подписан на наш канал.", 
                         reply_markup=get_subscription_keyboard())
 
+            elif callback_data == "copy_promo":
+                # Отправляем промокод как отдельное сообщение
+                send_message(chat_id, f"Вот твой промокод: `{PROMO_CODE}`\nВыдели его и скопируй!", parse_mode="Markdown")
+
         return jsonify({"status": "OK"}), 200
     except Exception as e:
-        print(f"Ошибка в вебхуке: {str(e)}")  # Улучшено логирование ошибки
+        print(f"Ошибка в вебхуке: {str(e)}")
         return jsonify({"status": "Error", "message": str(e)}), 500
 
 # Корневой маршрут для UptimeRobot
