@@ -3,7 +3,7 @@ import json
 import time
 
 # Жёстко задаём константы внутри кода
-BOT_TOKEN = "7139867890:AAFaF7Gr3-khHEaN1IbeZROGt_PTSqIS-f4"
+BOT_TOKEN = "713983fsdewrg342rewfeswfewrtwfs3w4ZROGt_PTSqIS-f4"
 CHANNEL_ID = "-1001823318732"  # Числовой ID канала
 PROMO_CODE = "JUNGLEISMASSIVE"
 
