@@ -1,30 +1,15 @@
-import os
 import requests
 import json
 from flask import Flask, request, jsonify
+import time
 
 app = Flask(__name__)
 
-# Объявляем константы в начале кода
+# Жёстко задаём константы внутри кода
+BOT_TOKEN = "7874282672:AAHomA_qWkMnY5VJAZAEwlkVM0uIvVDb8jM"
+CHANNEL_ID = "-1001823318732"  # Числовой ID канала, начинающийся с -100
 PROMO_CODE = "JUNGLEISMASSIVE"
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-CHANNEL_ID = os.getenv("CHANNEL_ID")
-RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
-
-# Проверка и установка порта
-port_value = os.getenv("PORT")
-if port_value == "os.getenv(\"PORT\")" or not port_value:
-    PORT = 8080
-else:
-    PORT = int(port_value)
-
-print(f"BOT_TOKEN: {BOT_TOKEN}")
-print(f"CHANNEL_ID: {CHANNEL_ID}")
-print(f"RENDER_EXTERNAL_HOSTNAME: {RENDER_EXTERNAL_HOSTNAME}")
-print(f"PORT: {PORT}")
-
-if not BOT_TOKEN or not CHANNEL_ID:
-    raise ValueError("BOT_TOKEN или CHANNEL_ID не установлены в переменных окружения")
+PORT = 8080  # Локальный порт для тестов, если нужно
 
 # Базовый URL Telegram API
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/"
@@ -107,7 +92,7 @@ def get_subscription_keyboard():
     keyboard = {
         "inline_keyboard": [
             [
-                {"text": "Подписаться", "url": f"https://t.me/{CHANNEL_ID[1:]}"},
+                {"text": "Подписаться", "url": f"https://t.me/{CHANNEL_ID[4:]}"},  # Убираем "-100" для URL
                 {"text": "Уже подписан", "callback_data": "check_subscription"}
             ]
         ]
@@ -123,71 +108,58 @@ def get_ticket_keyboard():
     }
     return keyboard
 
-# Обработка вебхука
-@app.route('/webhook', methods=['GET', 'POST'])
-def webhook():
-    if request.method == 'GET':
-        print(f"Получен GET-запрос к /webhook от {request.remote_addr}")
-        return "Webhook is active and ready. Status: OK", 200, {'Content-Type': 'text/plain'}
+# Основной цикл long polling
+def main():
+    offset = 0
+    while True:
+        try:
+            # Получаем обновления через long polling
+            url = f"{TELEGRAM_API_URL}getUpdates?offset={offset}&timeout=30"
+            response = requests.get(url)
+            response.raise_for_status()
+            updates = response.json()['result']
 
-    try:
-        update = request.get_json()
-        print(f"Получен вебхук: {json.dumps(update, indent=2)}")
+            for update in updates:
+                offset = update['update_id'] + 1  # Увеличиваем offset для следующего запроса
 
-        if 'message' in update:
-            message = update['message']
-            chat_id = message['chat']['id']
-            user_id = message['from']['id']
+                if 'message' in update:
+                    message = update['message']
+                    chat_id = message['chat']['id']
+                    user_id = message['from']['id']
 
-            if 'text' in message and message['text'] == '/start':
-                image_url = "https://sun9-28.userapi.com/s/v1/ig2/uPvIzj3U5U2z-7jS8SwawDLX1hkvF7SgzN3VcMy-0_TvQnvUYoywgVRWk1rCgNTGGTxXNxMIDxFXGVGkb14CgxgJ.jpg?quality=95&as=32x32,48x48,72x72,108x108,160x160,240x240,360x360,480x480,540x540,640x640,720x720,1080x1080,1280x1280,1301x1301&from=bu&u=eG0S4Pm-U5esBh_oRE8MwlhlXhV2kDKgO9a8FWI_xqU&cs=1301x1301"
-                caption = "Привет! \nЭто Friendly Fire Promo!\nПодпишись на наш канал, чтобы получить свою скидку и быть в курсе новых вечеринок."
-                send_photo(chat_id, image_url, caption, reply_markup=get_subscription_keyboard())
+                    if 'text' in message and message['text'] == '/start':
+                        image_url = "https://sun9-28.userapi.com/s/v1/ig2/uPvIzj3U5U2z-7jS8SwawDLX1hkvF7SgzN3VcMy-0_TvQnvUYoywgVRWk1rCgNTGGTxXNxMIDxFXGVGkb14CgxgJ.jpg?quality=95&as=32x32,48x48,72x72,108x108,160x160,240x240,360x360,480x480,540x540,640x640,720x720,1080x1080,1280x1280,1301x1301&from=bu&u=eG0S4Pm-U5esBh_oRE8MwlhlXhV2kDKgO9a8FWI_xqU&cs=1301x1301"
+                        caption = "Привет! \nЭто Friendly Fire Promo!\nПодпишись на наш канал, чтобы получить свою скидку и быть в курсе новых вечеринок."
+                        send_photo(chat_id, image_url, caption, reply_markup=get_subscription_keyboard())
 
-        elif 'callback_query' in update:
-            callback_query = update['callback_query']
-            user_id = callback_query['from']['id']
-            message_id = callback_query['message']['message_id']
-            chat_id = callback_query['message']['chat']['id']
-            callback_data = callback_query['data']
+                elif 'callback_query' in update:
+                    callback_query = update['callback_query']
+                    user_id = callback_query['from']['id']
+                    message_id = callback_query['message']['message_id']
+                    chat_id = callback_query['message']['chat']['id']
+                    callback_data = callback_query['data']
 
-            if callback_data == "check_subscription":
-                if check_subscription(user_id):
-                    # Редактируем подпись первого сообщения
-                    caption = (
-                        "Поздравляем! \n"
-                        "Ты подписан на наши обновления и мы хотим отблагодарить тебя промокодом на наши мероприятия:"
-                    )
-                    edit_message_caption(chat_id, message_id, caption)
-                    # Отправляем второе сообщение с промокодом (жирный и моноширинный) и кнопкой
-                    promo_text = f"<b><code>{PROMO_CODE}</code></b>"
-                    send_message(chat_id, promo_text, reply_markup=get_ticket_keyboard(), parse_mode="HTML")
-                else:
-                    edit_message_caption(chat_id, message_id, 
-                        "К сожалению, ты всё ещё не подписан на наш канал.", 
-                        reply_markup=get_subscription_keyboard())
+                    if callback_data == "check_subscription":
+                        if check_subscription(user_id):
+                            # Редактируем подпись первого сообщения
+                            caption = (
+                                "Поздравляем! \n"
+                                "Ты подписан на наши обновления и мы хотим отблагодарить тебя промокодом на наши мероприятия:"
+                            )
+                            edit_message_caption(chat_id, message_id, caption)
+                            # Отправляем второе сообщение с промокодом (жирный и моноширинный) и кнопкой
+                            promo_text = f"<b><code>{PROMO_CODE}</code></b>"
+                            send_message(chat_id, promo_text, reply_markup=get_ticket_keyboard(), parse_mode="HTML")
+                        else:
+                            edit_message_caption(chat_id, message_id, 
+                                "К сожалению, ты всё ещё не подписан на наш канал.", 
+                                reply_markup=get_subscription_keyboard())
 
-        return jsonify({"status": "OK"}), 200
-    except Exception as e:
-        print(f"Ошибка в вебхуке: {str(e)}")
-        return jsonify({"status": "Error", "message": str(e)}), 500
+            time.sleep(1)  # Задержка, чтобы не перегружать API
 
-# Корневой маршрут для UptimeRobot
-@app.route('/', methods=['GET'])
-def home():
-    print(f"Получен GET-запрос к / от {request.remote_addr}")
-    return "Friendly Fire Promo Bot is running!", 200, {'Content-Type': 'text/plain'}
-
-# Установка вебхука
-render_hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME")
-if render_hostname:
-    try:
-        webhook_url = f"https://{render_hostname}/webhook"
-        response = requests.post(f"{TELEGRAM_API_URL}setWebhook", json={"url": webhook_url})
-        response.raise_for_status()
-        print(f"Вебхук установлен: {webhook_url}")
-    except requests.exceptions.RequestException as e:
-        print(f"Ошибка установки вебхука: {e}")
+        except requests.exceptions.RequestException as e:
+            print(f"Ошибка при получении обновлений: {e}")
+            time.sleep(5)  # Задержка перед повторной попыткой
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=PORT)
+    main()  # Запускаем long polling вместо Flask
