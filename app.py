@@ -30,7 +30,7 @@ if not BOT_TOKEN or not CHANNEL_ID:
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/"
 
 # Функция для отправки сообщений в Telegram
-def send_message(chat_id, text, reply_markup=None):
+def send_message(chat_id, text, reply_markup=None, parse_mode=None):
     url = f"{TELEGRAM_API_URL}sendMessage"
     payload = {
         "chat_id": chat_id,
@@ -38,6 +38,8 @@ def send_message(chat_id, text, reply_markup=None):
     }
     if reply_markup:
         payload["reply_markup"] = json.dumps(reply_markup)
+    if parse_mode:
+        payload["parse_mode"] = parse_mode
     try:
         response = requests.post(url, json=payload)
         response.raise_for_status()
@@ -151,9 +153,14 @@ def webhook():
 
             if callback_data == "check_subscription":
                 if check_subscription(user_id):
-                    # Используем Markdown для выделения промокода
-                    caption = f"Поздравляем! \nТы подписан на наши обновления и мы хотим отблагодарить тебя промокодом на наши мероприятия: `{PROMO_CODE}`\nДействует только при покупке билетов онлайн."
-                    edit_message_caption(chat_id, message_id, caption, reply_markup=get_ticket_keyboard(), parse_mode="Markdown")
+                    # Используем HTML для выделения промокода жирным и моноширинным текстом
+                    caption = (
+                        "Поздравляем! \n"
+                        "Ты подписан на наши обновления и мы хотим отблагодарить тебя промокодом на наши мероприятия: "
+                        f"<b><code>{PROMO_CODE}</code></b>\n"
+                        "Действует только при покупке билетов онлайн."
+                    )
+                    edit_message_caption(chat_id, message_id, caption, reply_markup=get_ticket_keyboard(), parse_mode="HTML")
                 else:
                     edit_message_caption(chat_id, message_id, 
                         "К сожалению, ты всё ещё не подписан на наш канал.", 
