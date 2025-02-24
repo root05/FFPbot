@@ -1,5 +1,6 @@
 import os
 import requests
+import json  # Добавлен импорт json
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
@@ -156,7 +157,7 @@ def webhook():
 
         return jsonify({"status": "OK"}), 200
     except Exception as e:
-        print(f"Ошибка в вебхуке: {e}")
+        print(f"Ошибка в вебхуке: {str(e)}")  # Улучшено логирование ошибки
         return jsonify({"status": "Error", "message": str(e)}), 500
 
 # Корневой маршрут для UptimeRobot
