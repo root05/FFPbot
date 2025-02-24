@@ -1,30 +1,11 @@
-import os
 import requests
 import json
-from flask import Flask, request, jsonify
+import time
 
-app = Flask(__name__)
-
-# Объявляем константы в начале кода
+# Жёстко задаём константы внутри кода
+BOT_TOKEN = "7139867890:AAFaF7Gr3-khHEaN1IbeZROGt_PTSqIS-f4"
+CHANNEL_ID = "-1001823318732"  # Числовой ID канала
 PROMO_CODE = "JUNGLEISMASSIVE"
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-CHANNEL_ID = os.getenv("CHANNEL_ID")
-RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
-
-# Проверка и установка порта
-port_value = os.getenv("PORT")
-if port_value == "os.getenv(\"PORT\")" or not port_value:
-    PORT = 8080
-else:
-    PORT = int(port_value)
-
-print(f"BOT_TOKEN: {BOT_TOKEN}")
-print(f"CHANNEL_ID: {CHANNEL_ID}")
-print(f"RENDER_EXTERNAL_HOSTNAME: {RENDER_EXTERNAL_HOSTNAME}")
-print(f"PORT: {PORT}")
-
-if not BOT_TOKEN or not CHANNEL_ID:
-    raise ValueError("BOT_TOKEN или CHANNEL_ID не установлены в переменных окружения")
 
 # Базовый URL Telegram API
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/"
@@ -41,11 +22,13 @@ def send_message(chat_id, text, reply_markup=None, parse_mode=None):
     if parse_mode:
         payload["parse_mode"] = parse_mode
     try:
-        response = requests.post(url, json=payload)
+        response = requests.post(url, json=payload, timeout=60)  # Увеличенный таймаут
         response.raise_for_status()
         print(f"Сообщение отправлено пользователю {chat_id}")
     except requests.exceptions.RequestException as e:
         print(f"Ошибка отправки сообщения: {e}")
+        return False
+    return True
 
 # Функция для отправки фото в Telegram
 def send_photo(chat_id, photo_url, caption, reply_markup=None, parse_mode=None):
@@ -60,11 +43,13 @@ def send_photo(chat_id, photo_url, caption, reply_markup=None, parse_mode=None):
     if parse_mode:
         payload["parse_mode"] = parse_mode
     try:
-        response = requests.post(url, json=payload)
+        response = requests.post(url, json=payload, timeout=60)
         response.raise_for_status()
         print(f"Фото отправлено пользователю {chat_id}")
     except requests.exceptions.RequestException as e:
         print(f"Ошибка отправки фото: {e}")
+        return False
+    return True
 
 # Функция для редактирования сообщения в Telegram
 def edit_message_caption(chat_id, message_id, caption, reply_markup=None, parse_mode=None):
@@ -79,11 +64,13 @@ def edit_message_caption(chat_id, message_id, caption, reply_markup=None, parse_
     if parse_mode:
         payload["parse_mode"] = parse_mode
     try:
-        response = requests.post(url, json=payload)
+        response = requests.post(url, json=payload, timeout=60)
         response.raise_for_status()
         print(f"Сообщение обновлено для пользователя {chat_id}")
     except requests.exceptions.RequestException as e:
         print(f"Ошибка редактирования сообщения: {e}")
+        return False
+    return True
 
 # Функция проверки подписки
 def check_subscription(user_id):
@@ -93,7 +80,7 @@ def check_subscription(user_id):
         "user_id": user_id
     }
     try:
-        response = requests.post(url, json=payload)
+        response = requests.post(url, json=payload, timeout=60)
         response.raise_for_status()
         member_status = response.json()['result']['status']
         print(f"Проверка подписки для user_id {user_id}: {member_status}")
@@ -107,7 +94,7 @@ def get_subscription_keyboard():
     keyboard = {
         "inline_keyboard": [
             [
-                {"text": "Подписаться", "url": f"https://t.me/{CHANNEL_ID[1:]}"},
+                {"text": "Подписаться", "url": f"https://t.me/{CHANNEL_ID[4:]}"},  # Убираем "-100" для URL
                 {"text": "Уже подписан", "callback_data": "check_subscription"}
             ]
         ]
@@ -123,71 +110,79 @@ def get_ticket_keyboard():
     }
     return keyboard
 
-# Обработка вебхука
-@app.route('/webhook', methods=['GET', 'POST'])
-def webhook():
-    if request.method == 'GET':
-        print(f"Получен GET-запрос к /webhook от {request.remote_addr}")
-        return "Webhook is active and ready. Status: OK", 200, {'Content-Type': 'text/plain'}
+# Основной цикл long polling
+def main():
+    offset = 0
+    max_retries = 5  # Максимальное количество повторных попыток
+    retry_delay = 10  # Задержка между повторными попытками (секунд)
 
-    try:
-        update = request.get_json()
-        print(f"Получен вебхук: {json.dumps(update, indent=2)}")
+    while True:
+        retries = 0
+        while retries < max_retries:
+            try:
+                # Получаем обновления через long polling
+                url = f"{TELEGRAM_API_URL}getUpdates?offset={offset}&timeout=60"  # Увеличенный таймаут
+                response = requests.get(url, timeout=60)
+                response.raise_for_status()
+                updates = response.json()['result']
 
-        if 'message' in update:
-            message = update['message']
-            chat_id = message['chat']['id']
-            user_id = message['from']['id']
+                for update in updates:
+                    offset = update['update_id'] + 1  # Увеличиваем offset для следующего запроса
 
-            if 'text' in message and message['text'] == '/start':
-                image_url = "https://sun9-28.userapi.com/s/v1/ig2/uPvIzj3U5U2z-7jS8SwawDLX1hkvF7SgzN3VcMy-0_TvQnvUYoywgVRWk1rCgNTGGTxXNxMIDxFXGVGkb14CgxgJ.jpg?quality=95&as=32x32,48x48,72x72,108x108,160x160,240x240,360x360,480x480,540x540,640x640,720x720,1080x1080,1280x1280,1301x1301&from=bu&u=eG0S4Pm-U5esBh_oRE8MwlhlXhV2kDKgO9a8FWI_xqU&cs=1301x1301"
-                caption = "Привет! \nЭто Friendly Fire Promo!\nПодпишись на наш канал, чтобы получить свою скидку и быть в курсе новых вечеринок."
-                send_photo(chat_id, image_url, caption, reply_markup=get_subscription_keyboard())
+                    if 'message' in update:
+                        message = update['message']
+                        chat_id = message['chat']['id']
+                        user_id = message['from']['id']
 
-        elif 'callback_query' in update:
-            callback_query = update['callback_query']
-            user_id = callback_query['from']['id']
-            message_id = callback_query['message']['message_id']
-            chat_id = callback_query['message']['chat']['id']
-            callback_data = callback_query['data']
+                        if 'text' in message and message['text'] == '/start':
+                            image_url = "https://sun9-28.userapi.com/s/v1/ig2/uPvIzj3U5U2z-7jS8SwawDLX1hkvF7SgzN3VcMy-0_TvQnvUYoywgVRWk1rCgNTGGTxXNxMIDxFXGVGkb14CgxgJ.jpg?quality=95&as=32x32,48x48,72x72,108x108,160x160,240x240,360x360,480x480,540x540,640x640,720x720,1080x1080,1280x1280,1301x1301&from=bu&u=eG0S4Pm-U5esBh_oRE8MwlhlXhV2kDKgO9a8FWI_xqU&cs=1301x1301"
+                            caption = "Привет! \nЭто Friendly Fire Promo!\nПодпишись на наш канал, чтобы получить свою скидку и быть в курсе новых вечеринок."
+                            if send_photo(chat_id, image_url, caption, reply_markup=get_subscription_keyboard()):
+                                print(f"Отправлено начальное сообщение пользователю {chat_id}")
+                            else:
+                                print(f"Не удалось отправить начальное сообщение пользователю {chat_id}")
 
-            if callback_data == "check_subscription":
-                if check_subscription(user_id):
-                    # Редактируем подпись первого сообщения
-                    caption = (
-                        "Поздравляем! \n"
-                        "Ты подписан на наши обновления и мы хотим отблагодарить тебя промокодом на наши мероприятия:"
-                    )
-                    edit_message_caption(chat_id, message_id, caption)
-                    # Отправляем второе сообщение с промокодом (жирный и моноширинный) и кнопкой
-                    promo_text = f"<b><code>{PROMO_CODE}</code></b>"
-                    send_message(chat_id, promo_text, reply_markup=get_ticket_keyboard(), parse_mode="HTML")
+                    elif 'callback_query' in update:
+                        callback_query = update['callback_query']
+                        user_id = callback_query['from']['id']
+                        message_id = callback_query['message']['message_id']
+                        chat_id = callback_query['message']['chat']['id']
+                        callback_data = callback_query['data']
+
+                        if callback_data == "check_subscription":
+                            if check_subscription(user_id):
+                                # Редактируем подпись первого сообщения
+                                caption = (
+                                    "Поздравляем! \n"
+                                    "Ты подписан на наши обновления и мы хотим отблагодарить тебя промокодом на наши мероприятия:"
+                                )
+                                if edit_message_caption(chat_id, message_id, caption):
+                                    promo_text = f"<b><code>{PROMO_CODE}</code></b>"
+                                    if send_message(chat_id, promo_text, reply_markup=get_ticket_keyboard(), parse_mode="HTML"):
+                                        print(f"Отправлен промокод пользователю {chat_id}")
+                                    else:
+                                        print(f"Не удалось отправить промокод пользователю {chat_id}")
+                            else:
+                                if edit_message_caption(chat_id, message_id, 
+                                    "К сожалению, ты всё ещё не подписан на наш канал.", 
+                                    reply_markup=get_subscription_keyboard()):
+                                    print(f"Обновлено сообщение для пользователя {chat_id} о необходимости подписки")
+                                else:
+                                    print(f"Не удалось обновить сообщение для пользователя {chat_id}")
+
+                break  # Если запрос успешен, выходим из цикла повторных попыток
+
+            except requests.exceptions.RequestException as e:
+                print(f"Ошибка при получении обновлений (попытка {retries + 1}/{max_retries}): {e}")
+                retries += 1
+                if retries < max_retries:
+                    time.sleep(retry_delay)
                 else:
-                    edit_message_caption(chat_id, message_id, 
-                        "К сожалению, ты всё ещё не подписан на наш канал.", 
-                        reply_markup=get_subscription_keyboard())
+                    print("Превышено максимальное количество повторных попыток. Перезапуск через 60 секунд...")
+                    time.sleep(60)
 
-        return jsonify({"status": "OK"}), 200
-    except Exception as e:
-        print(f"Ошибка в вебхуке: {str(e)}")
-        return jsonify({"status": "Error", "message": str(e)}), 500
-
-# Корневой маршрут для UptimeRobot
-@app.route('/', methods=['GET'])
-def home():
-    print(f"Получен GET-запрос к / от {request.remote_addr}")
-    return "Friendly Fire Promo Bot is running!", 200, {'Content-Type': 'text/plain'}
-
-# Установка вебхука
-render_hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME")
-if render_hostname:
-    try:
-        webhook_url = f"https://{render_hostname}/webhook"
-        response = requests.post(f"{TELEGRAM_API_URL}setWebhook", json={"url": webhook_url})
-        response.raise_for_status()
-        print(f"Вебхук установлен: {webhook_url}")
-    except requests.exceptions.RequestException as e:
-        print(f"Ошибка установки вебхука: {e}")
+        # Дополнительная задержка для предотвращения перегрузки API
+        time.sleep(2)  # Увеличенная задержка между циклами
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=PORT)
+    main()
