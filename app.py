@@ -153,14 +153,14 @@ def webhook():
 
             if callback_data == "check_subscription":
                 if check_subscription(user_id):
-                    # Используем HTML для выделения промокода жирным и моноширинным текстом
+                    # Редактируем подпись первого сообщения
                     caption = (
                         "Поздравляем! \n"
-                        "Ты подписан на наши обновления и мы хотим отблагодарить тебя промокодом на наши мероприятия: "
-                        f"<b><code>{PROMO_CODE}</code></b>\n"
-                        "Действует только при покупке билетов онлайн."
+                        "Ты подписан на наши обновления и мы хотим отблагодарить тебя промокодом на наши мероприятия:"
                     )
-                    edit_message_caption(chat_id, message_id, caption, reply_markup=get_ticket_keyboard(), parse_mode="HTML")
+                    edit_message_caption(chat_id, message_id, caption)
+                    # Отправляем второе сообщение с промокодом и кнопкой
+                    send_message(chat_id, PROMO_CODE, reply_markup=get_ticket_keyboard())
                 else:
                     edit_message_caption(chat_id, message_id, 
                         "К сожалению, ты всё ещё не подписан на наш канал.", 
