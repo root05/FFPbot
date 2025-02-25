@@ -3,9 +3,9 @@ import json
 import time
 
 # Жёстко задаём константы внутри кода
-BOT_TOKEN = "713983fsdewrg342rewfeswfewrtwfs3w4ZROGt_PTSqIS-f4"
-CHANNEL_ID = "-1001823318732"  # Числовой ID канала
-PROMO_CODE = "JUNGLEISMASSIVE"
+BOT_TOKEN = ""
+CHANNEL_ID = ""  
+PROMO_CODE = ""
 
 # Базовый URL Telegram API
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/"
